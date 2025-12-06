@@ -5,8 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
+import CareerActions from '@/components/CareerActions';
 
-type Career = 'business' | 'police' | 'politician' | 'criminal' | 'smuggler' | null;
+type Career = 'business' | 'police' | 'politician' | 'criminal' | 'smuggler' | 'doctor' | 'teacher' | 'programmer' | 'lawyer' | 'journalist' | 'chef' | 'architect' | 'scientist' | 'artist' | 'musician' | 'athlete' | 'driver' | 'pilot' | 'farmer' | 'trader' | null;
 
 interface Player {
   name: string;
@@ -34,6 +35,38 @@ const careers = [
     earning: 5000,
   },
   {
+    id: 'doctor' as Career,
+    name: 'Врач',
+    icon: 'Heart',
+    description: 'Спасайте жизни, лечите людей, развивайте медицину',
+    color: 'text-red-300',
+    earning: 4500,
+  },
+  {
+    id: 'teacher' as Career,
+    name: 'Учитель',
+    icon: 'GraduationCap',
+    description: 'Обучайте детей, делитесь знаниями, формируйте будущее',
+    color: 'text-yellow-400',
+    earning: 2800,
+  },
+  {
+    id: 'programmer' as Career,
+    name: 'Программист',
+    icon: 'Code',
+    description: 'Создавайте приложения, пишите код, меняйте мир технологий',
+    color: 'text-green-400',
+    earning: 6500,
+  },
+  {
+    id: 'lawyer' as Career,
+    name: 'Адвокат',
+    icon: 'Scale',
+    description: 'Защищайте права, выигрывайте дела, работайте с законом',
+    color: 'text-indigo-400',
+    earning: 5500,
+  },
+  {
     id: 'police' as Career,
     name: 'Полицейский',
     icon: 'Shield',
@@ -48,6 +81,94 @@ const careers = [
     description: 'Создавайте законы, влияйте на страну, управляйте регионами',
     color: 'text-purple-400',
     earning: 4000,
+  },
+  {
+    id: 'journalist' as Career,
+    name: 'Журналист',
+    icon: 'Newspaper',
+    description: 'Ищите правду, пишите статьи, влияйте на общественное мнение',
+    color: 'text-slate-300',
+    earning: 3200,
+  },
+  {
+    id: 'chef' as Career,
+    name: 'Шеф-повар',
+    icon: 'ChefHat',
+    description: 'Готовьте шедевры, открывайте рестораны, получайте звёзды Мишлен',
+    color: 'text-orange-300',
+    earning: 3800,
+  },
+  {
+    id: 'architect' as Career,
+    name: 'Архитектор',
+    icon: 'Building2',
+    description: 'Проектируйте здания, создавайте городской ландшафт',
+    color: 'text-teal-400',
+    earning: 4800,
+  },
+  {
+    id: 'scientist' as Career,
+    name: 'Учёный',
+    icon: 'FlaskConical',
+    description: 'Исследуйте мир, делайте открытия, получайте Нобелевские премии',
+    color: 'text-violet-400',
+    earning: 4200,
+  },
+  {
+    id: 'artist' as Career,
+    name: 'Художник',
+    icon: 'Palette',
+    description: 'Создавайте искусство, выставляйтесь в галереях, продавайте картины',
+    color: 'text-pink-400',
+    earning: 3500,
+  },
+  {
+    id: 'musician' as Career,
+    name: 'Музыкант',
+    icon: 'Music',
+    description: 'Пишите хиты, выступайте на концертах, получайте премии',
+    color: 'text-fuchsia-400',
+    earning: 4500,
+  },
+  {
+    id: 'athlete' as Career,
+    name: 'Спортсмен',
+    icon: 'Trophy',
+    description: 'Тренируйтесь, побеждайте на соревнованиях, становитесь чемпионом',
+    color: 'text-amber-400',
+    earning: 5800,
+  },
+  {
+    id: 'driver' as Career,
+    name: 'Водитель',
+    icon: 'Car',
+    description: 'Перевозите людей и грузы, работайте в такси или на дальних рейсах',
+    color: 'text-gray-400',
+    earning: 2500,
+  },
+  {
+    id: 'pilot' as Career,
+    name: 'Пилот',
+    icon: 'Plane',
+    description: 'Управляйте самолётами, летайте по всему миру, зарабатывайте высокие зарплаты',
+    color: 'text-sky-400',
+    earning: 7500,
+  },
+  {
+    id: 'farmer' as Career,
+    name: 'Фермер',
+    icon: 'Sprout',
+    description: 'Выращивайте урожай, разводите скот, поставляйте продукты',
+    color: 'text-lime-400',
+    earning: 3000,
+  },
+  {
+    id: 'trader' as Career,
+    name: 'Трейдер',
+    icon: 'TrendingUp',
+    description: 'Торгуйте на бирже, инвестируйте, зарабатывайте на рынках',
+    color: 'text-emerald-400',
+    earning: 6800,
   },
   {
     id: 'criminal' as Career,
@@ -77,10 +198,15 @@ const aiEvents = [
 
 const mockLeaderboard: LeaderboardEntry[] = [
   { name: 'Александр К.', career: 'Бизнесмен', balance: 15000000, influence: 95 },
-  { name: 'Мария В.', career: 'Депутат', balance: 8500000, influence: 88 },
   { name: 'Дмитрий Р.', career: 'Преступник', balance: 12000000, influence: 76 },
-  { name: 'Елена С.', career: 'Полицейский', balance: 4200000, influence: 82 },
   { name: 'Игорь М.', career: 'Контрабандист', balance: 9800000, influence: 71 },
+  { name: 'Мария В.', career: 'Депутат', balance: 8500000, influence: 88 },
+  { name: 'Анна П.', career: 'Пилот', balance: 7200000, influence: 65 },
+  { name: 'Сергей Б.', career: 'Программист', balance: 6800000, influence: 58 },
+  { name: 'Ольга К.', career: 'Трейдер', balance: 6500000, influence: 62 },
+  { name: 'Владимир Т.', career: 'Адвокат', balance: 5900000, influence: 72 },
+  { name: 'Екатерина Л.', career: 'Врач', balance: 5100000, influence: 81 },
+  { name: 'Николай Ш.', career: 'Спортсмен', balance: 4800000, influence: 68 },
 ];
 
 const Index = () => {
@@ -162,9 +288,10 @@ const Index = () => {
 
           <div className="mb-8 text-center animate-slide-up">
             <h2 className="text-3xl font-bold mb-6">Выберите свой путь</h2>
+            <p className="text-muted-foreground">20 уникальных профессий из реальной жизни</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-scale-in">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-scale-in">
             {careers.map((career, index) => (
               <Card
                 key={career.id}
@@ -290,112 +417,12 @@ const Index = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  {player.career === 'business' && (
-                    <>
-                      <Button onClick={() => performAction('Сделка закрыта')} className="h-20">
-                        <Icon name="Handshake" size={24} className="mr-2" />
-                        Закрыть сделку
-                      </Button>
-                      <Button onClick={() => performAction('Бизнес открыт')} variant="secondary" className="h-20">
-                        <Icon name="Store" size={24} className="mr-2" />
-                        Открыть бизнес
-                      </Button>
-                      <Button onClick={() => performAction('Инвестиция сделана')} variant="outline" className="h-20">
-                        <Icon name="TrendingUp" size={24} className="mr-2" />
-                        Инвестировать
-                      </Button>
-                      <Button onClick={() => performAction('Компания куплена')} variant="outline" className="h-20">
-                        <Icon name="Building" size={24} className="mr-2" />
-                        Купить компанию
-                      </Button>
-                    </>
-                  )}
-                  
-                  {player.career === 'police' && (
-                    <>
-                      <Button onClick={() => performAction('Патруль завершён')} className="h-20">
-                        <Icon name="Car" size={24} className="mr-2" />
-                        Патрулировать
-                      </Button>
-                      <Button onClick={() => performAction('Преступник арестован')} variant="secondary" className="h-20">
-                        <Icon name="Handcuffs" size={24} className="mr-2" />
-                        Арестовать
-                      </Button>
-                      <Button onClick={() => performAction('Расследование ведётся')} variant="outline" className="h-20">
-                        <Icon name="Search" size={24} className="mr-2" />
-                        Расследовать
-                      </Button>
-                      <Button onClick={() => performAction('Порядок восстановлен')} variant="outline" className="h-20">
-                        <Icon name="Shield" size={24} className="mr-2" />
-                        Охранять
-                      </Button>
-                    </>
-                  )}
-                  
-                  {player.career === 'politician' && (
-                    <>
-                      <Button onClick={() => performAction('Закон принят')} className="h-20">
-                        <Icon name="ScrollText" size={24} className="mr-2" />
-                        Принять закон
-                      </Button>
-                      <Button onClick={() => performAction('Выборы выиграны')} variant="secondary" className="h-20">
-                        <Icon name="Vote" size={24} className="mr-2" />
-                        Провести выборы
-                      </Button>
-                      <Button onClick={() => performAction('Регион управляется')} variant="outline" className="h-20">
-                        <Icon name="MapPin" size={24} className="mr-2" />
-                        Управлять регионом
-                      </Button>
-                      <Button onClick={() => performAction('Речь произнесена')} variant="outline" className="h-20">
-                        <Icon name="Mic" size={24} className="mr-2" />
-                        Выступить
-                      </Button>
-                    </>
-                  )}
-                  
-                  {player.career === 'criminal' && (
-                    <>
-                      <Button onClick={() => performAction('Ограбление успешно')} className="h-20">
-                        <Icon name="DollarSign" size={24} className="mr-2" />
-                        Ограбить
-                      </Button>
-                      <Button onClick={() => performAction('Банда создана')} variant="secondary" className="h-20">
-                        <Icon name="Users" size={24} className="mr-2" />
-                        Создать банду
-                      </Button>
-                      <Button onClick={() => performAction('Территория захвачена')} variant="outline" className="h-20">
-                        <Icon name="Flag" size={24} className="mr-2" />
-                        Захватить район
-                      </Button>
-                      <Button onClick={() => performAction('Дело провёрнуто')} variant="outline" className="h-20">
-                        <Icon name="Gem" size={24} className="mr-2" />
-                        Тёмные дела
-                      </Button>
-                    </>
-                  )}
-                  
-                  {player.career === 'smuggler' && (
-                    <>
-                      <Button onClick={() => performAction('Товар доставлен')} className="h-20">
-                        <Icon name="Truck" size={24} className="mr-2" />
-                        Перевезти товар
-                      </Button>
-                      <Button onClick={() => performAction('Канал открыт')} variant="secondary" className="h-20">
-                        <Icon name="Route" size={24} className="mr-2" />
-                        Открыть канал
-                      </Button>
-                      <Button onClick={() => performAction('Граница пройдена')} variant="outline" className="h-20">
-                        <Icon name="Plane" size={24} className="mr-2" />
-                        Пересечь границу
-                      </Button>
-                      <Button onClick={() => performAction('Сделка заключена')} variant="outline" className="h-20">
-                        <Icon name="Package" size={24} className="mr-2" />
-                        Продать груз
-                      </Button>
-                    </>
-                  )}
-                </div>
+                {player.career && (
+                  <CareerActions 
+                    career={player.career} 
+                    onAction={performAction} 
+                  />
+                )}
               </CardContent>
             </Card>
 
