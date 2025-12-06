@@ -254,11 +254,7 @@ const Index = () => {
     });
   };
 
-  const performAction = (action: string) => {
-    const career = careers.find(c => c.id === player.career);
-    if (!career) return;
-
-    const earning = career.earning + Math.floor(Math.random() * 1000);
+  const performAction = (action: string, earning: number) => {
     const repChange = Math.floor(Math.random() * 10) - 3;
     const infChange = Math.floor(Math.random() * 5);
 
@@ -269,10 +265,18 @@ const Index = () => {
       influence: Math.min(100, prev.influence + infChange),
     }));
 
-    toast({
-      title: action,
-      description: `+${earning.toLocaleString('ru-RU')} ₽ | Репутация ${repChange > 0 ? '+' : ''}${repChange}`,
-    });
+    if (earning > 0) {
+      toast({
+        title: action,
+        description: `+${earning.toLocaleString('ru-RU')} ₽ | Репутация ${repChange > 0 ? '+' : ''}${repChange}`,
+      });
+    } else {
+      toast({
+        title: action,
+        description: 'Попробуйте снова!',
+        variant: 'destructive',
+      });
+    }
   };
 
   const triggerAiEvent = () => {
@@ -744,7 +748,8 @@ const Index = () => {
               <CardContent>
                 {player.career && (
                   <CareerActions 
-                    career={player.career} 
+                    career={player.career}
+                    difficulty={careers.find(c => c.id === player.career)?.earning || 3000}
                     onAction={performAction} 
                   />
                 )}

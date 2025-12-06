@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
+import MiniGames from './MiniGames';
 
 interface CareerAction {
   label: string;
@@ -10,7 +12,8 @@ interface CareerAction {
 
 interface CareerActionsProps {
   career: string;
-  onAction: (action: string) => void;
+  difficulty: number;
+  onAction: (action: string, earning: number) => void;
 }
 
 const careerActionsMap: Record<string, CareerAction[]> = {
@@ -136,8 +139,29 @@ const careerActionsMap: Record<string, CareerAction[]> = {
   ],
 };
 
-const CareerActions = ({ career, onAction }: CareerActionsProps) => {
+const CareerActions = ({ career, difficulty, onAction }: CareerActionsProps) => {
+  const [showMiniGame, setShowMiniGame] = useState(false);
+  const [selectedAction, setSelectedAction] = useState('');
   const actions = careerActionsMap[career] || [];
+
+  const handleActionClick = (action: string) => {
+    setSelectedAction(action);
+    setShowMiniGame(true);
+  };
+
+  const handleGameComplete = (success: boolean) => {
+    setShowMiniGame(false);
+    if (success) {
+      const baseEarning = difficulty + Math.floor(Math.random() * 1000);
+      onAction(selectedAction, baseEarning);
+    } else {
+      onAction('Провал! Попробуйте ещё раз', 0);
+    }
+  };
+
+  const handleGameCancel = () => {
+    setShowMiniGame(false);
+  };
 
   if (actions.length === 0) {
     return (
@@ -147,12 +171,23 @@ const CareerActions = ({ career, onAction }: CareerActionsProps) => {
     );
   }
 
+  if (showMiniGame) {
+    return (
+      <MiniGames
+        career={career}
+        difficulty={difficulty}
+        onComplete={handleGameComplete}
+        onCancel={handleGameCancel}
+      />
+    );
+  }
+
   return (
     <div className="grid grid-cols-2 gap-4">
       {actions.map((actionItem, index) => (
         <Button
           key={index}
-          onClick={() => onAction(actionItem.action)}
+          onClick={() => handleActionClick(actionItem.action)}
           variant={actionItem.variant || 'default'}
           className="h-20 flex-col"
         >
