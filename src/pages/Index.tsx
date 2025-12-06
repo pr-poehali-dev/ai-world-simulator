@@ -11,11 +11,15 @@ type Career = 'business' | 'police' | 'politician' | 'criminal' | 'smuggler' | '
 
 interface Player {
   name: string;
+  email: string;
   career: Career;
   balance: number;
   reputation: number;
   influence: number;
   level: number;
+  donateCoins: number;
+  isAdmin: boolean;
+  countryId: string | null;
 }
 
 interface LeaderboardEntry {
@@ -23,6 +27,16 @@ interface LeaderboardEntry {
   career: string;
   balance: number;
   influence: number;
+}
+
+interface Country {
+  id: string;
+  name: string;
+  flag: string;
+  founderId: string;
+  population: number;
+  budget: number;
+  laws: string[];
 }
 
 const careers = [
@@ -212,15 +226,24 @@ const mockLeaderboard: LeaderboardEntry[] = [
 const Index = () => {
   const { toast } = useToast();
   const [player, setPlayer] = useState<Player>({
-    name: 'Новый Игрок',
+    name: '',
+    email: '',
     career: null,
     balance: 10000,
     reputation: 50,
     influence: 0,
     level: 1,
+    donateCoins: 0,
+    isAdmin: false,
+    countryId: null,
   });
 
   const [gameStarted, setGameStarted] = useState(false);
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [showLogin, setShowLogin] = useState(true);
+  const [countries, setCountries] = useState<Country[]>([]);
+  const [showCountryCreation, setShowCountryCreation] = useState(false);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
 
   const selectCareer = (career: Career) => {
     setPlayer({ ...player, career });
@@ -269,6 +292,242 @@ const Index = () => {
       variant: event.impact < 0 ? 'destructive' : 'default',
     });
   };
+
+  const handleRegister = (name: string, email: string, password: string) => {
+    if (!name || !email || !password) {
+      toast({
+        title: 'Ошибка',
+        description: 'Заполните все поля',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    setPlayer(prev => ({ ...prev, name, email }));
+    setIsRegistered(true);
+    toast({
+      title: 'Добро пожаловать!',
+      description: `Аккаунт ${name} успешно создан`,
+    });
+  };
+
+  const handleLogin = (email: string, password: string) => {
+    if (!email || !password) {
+      toast({
+        title: 'Ошибка',
+        description: 'Заполните все поля',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    setPlayer(prev => ({ ...prev, name: 'Игрок', email, isAdmin: email === 'admin@liferp.com' }));
+    setIsRegistered(true);
+    toast({
+      title: 'Вход выполнен',
+      description: 'Добро пожаловать в LifeRP AI',
+    });
+  };
+
+  const buyDonateCoins = (amount: number, price: number) => {
+    if (player.balance < price) {
+      toast({
+        title: 'Недостаточно средств',
+        description: 'Пополните баланс',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    setPlayer(prev => ({
+      ...prev,
+      balance: prev.balance - price,
+      donateCoins: prev.donateCoins + amount,
+    }));
+    
+    toast({
+      title: 'Покупка успешна!',
+      description: `+${amount} донат-монет`,
+    });
+  };
+
+  const createCountry = (name: string, flag: string) => {
+    const COUNTRY_COST = 1000;
+    
+    if (player.donateCoins < COUNTRY_COST) {
+      toast({
+        title: 'Недостаточно донат-монет',
+        description: `Требуется ${COUNTRY_COST} донат-монет`,
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    const newCountry: Country = {
+      id: Date.now().toString(),
+      name,
+      flag,
+      founderId: player.email,
+      population: 1,
+      budget: 100000,
+      laws: [],
+    };
+    
+    setCountries(prev => [...prev, newCountry]);
+    setPlayer(prev => ({
+      ...prev,
+      donateCoins: prev.donateCoins - COUNTRY_COST,
+      countryId: newCountry.id,
+    }));
+    setShowCountryCreation(false);
+    
+    toast({
+      title: 'Страна создана!',
+      description: `${name} теперь на карте мира`,
+    });
+  };
+
+  const passLaw = (law: string) => {
+    if (player.career !== 'politician') {
+      toast({
+        title: 'Доступ запрещён',
+        description: 'Только депутаты могут принимать законы',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    const country = countries.find(c => c.id === player.countryId);
+    if (!country) {
+      toast({
+        title: 'Ошибка',
+        description: 'Вы не состоите в стране',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    setCountries(prev => prev.map(c => 
+      c.id === player.countryId 
+        ? { ...c, laws: [...c.laws, law] }
+        : c
+    ));
+    
+    toast({
+      title: 'Закон принят!',
+      description: law,
+    });
+  };
+
+  if (!isRegistered) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-slate-900 p-6 flex items-center justify-center">
+        <Card className="w-full max-w-md bg-card/80 backdrop-blur">
+          <CardHeader>
+            <CardTitle className="text-3xl text-center bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              LifeRP AI
+            </CardTitle>
+            <CardDescription className="text-center">
+              Симуляция реальной жизни с ИИ
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {showLogin ? (
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm text-muted-foreground">Email</label>
+                  <input
+                    type="email"
+                    id="login-email"
+                    placeholder="example@mail.com"
+                    className="w-full p-3 rounded-lg bg-slate-800/50 border border-border focus:border-primary outline-none"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm text-muted-foreground">Пароль</label>
+                  <input
+                    type="password"
+                    id="login-password"
+                    placeholder="••••••••"
+                    className="w-full p-3 rounded-lg bg-slate-800/50 border border-border focus:border-primary outline-none"
+                  />
+                </div>
+                <Button
+                  onClick={() => {
+                    const email = (document.getElementById('login-email') as HTMLInputElement).value;
+                    const password = (document.getElementById('login-password') as HTMLInputElement).value;
+                    handleLogin(email, password);
+                  }}
+                  className="w-full"
+                  size="lg"
+                >
+                  Войти
+                </Button>
+                <div className="text-center">
+                  <button
+                    onClick={() => setShowLogin(false)}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Нет аккаунта? Зарегистрироваться
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm text-muted-foreground">Имя персонажа</label>
+                  <input
+                    type="text"
+                    id="reg-name"
+                    placeholder="Иван Иванов"
+                    className="w-full p-3 rounded-lg bg-slate-800/50 border border-border focus:border-primary outline-none"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm text-muted-foreground">Email</label>
+                  <input
+                    type="email"
+                    id="reg-email"
+                    placeholder="example@mail.com"
+                    className="w-full p-3 rounded-lg bg-slate-800/50 border border-border focus:border-primary outline-none"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm text-muted-foreground">Пароль</label>
+                  <input
+                    type="password"
+                    id="reg-password"
+                    placeholder="••••••••"
+                    className="w-full p-3 rounded-lg bg-slate-800/50 border border-border focus:border-primary outline-none"
+                  />
+                </div>
+                <Button
+                  onClick={() => {
+                    const name = (document.getElementById('reg-name') as HTMLInputElement).value;
+                    const email = (document.getElementById('reg-email') as HTMLInputElement).value;
+                    const password = (document.getElementById('reg-password') as HTMLInputElement).value;
+                    handleRegister(name, email, password);
+                  }}
+                  className="w-full"
+                  size="lg"
+                >
+                  Зарегистрироваться
+                </Button>
+                <div className="text-center">
+                  <button
+                    onClick={() => setShowLogin(true)}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Уже есть аккаунт? Войти
+                  </button>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (!gameStarted) {
     return (
@@ -341,24 +600,84 @@ const Index = () => {
               {currentCareer?.name}
             </p>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setGameStarted(false);
-              setPlayer({
-                name: 'Новый Игрок',
-                career: null,
-                balance: 10000,
-                reputation: 50,
-                influence: 0,
-                level: 1,
-              });
-            }}
-          >
-            <Icon name="RefreshCw" size={16} className="mr-2" />
-            Новая игра
-          </Button>
+          <div className="flex gap-2">
+            {player.isAdmin && (
+              <Button
+                variant="secondary"
+                onClick={() => setShowAdminPanel(!showAdminPanel)}
+              >
+                <Icon name="ShieldCheck" size={16} className="mr-2" />
+                Админ-панель
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              onClick={() => {
+                setGameStarted(false);
+              }}
+            >
+              <Icon name="RefreshCw" size={16} className="mr-2" />
+              Сменить карьеру
+            </Button>
+          </div>
         </div>
+
+        {showAdminPanel && player.isAdmin && (
+          <Card className="bg-gradient-to-br from-red-950/50 to-orange-950/50 border-red-500/50 animate-fade-in">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Icon name="ShieldAlert" size={24} className="text-red-400" />
+                Админ-панель
+              </CardTitle>
+              <CardDescription>Управление игровым миром</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  onClick={() => {
+                    setPlayer(prev => ({ ...prev, balance: prev.balance + 1000000 }));
+                    toast({ title: 'Выдано', description: '+1,000,000 ₽' });
+                  }}
+                  variant="secondary"
+                  size="sm"
+                >
+                  <Icon name="DollarSign" size={16} className="mr-1" />
+                  +1M денег
+                </Button>
+                <Button
+                  onClick={() => {
+                    setPlayer(prev => ({ ...prev, donateCoins: prev.donateCoins + 500 }));
+                    toast({ title: 'Выдано', description: '+500 донат-монет' });
+                  }}
+                  variant="secondary"
+                  size="sm"
+                >
+                  <Icon name="Coins" size={16} className="mr-1" />
+                  +500 монет
+                </Button>
+                <Button
+                  onClick={() => {
+                    setPlayer(prev => ({ ...prev, level: prev.level + 10 }));
+                    toast({ title: 'Выдано', description: '+10 уровней' });
+                  }}
+                  variant="secondary"
+                  size="sm"
+                >
+                  <Icon name="TrendingUp" size={16} className="mr-1" />
+                  +10 уровней
+                </Button>
+                <Button
+                  onClick={triggerAiEvent}
+                  variant="destructive"
+                  size="sm"
+                >
+                  <Icon name="Zap" size={16} className="mr-1" />
+                  Событие
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
@@ -374,8 +693,14 @@ const Index = () => {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">Баланс</span>
-                      <span className="text-2xl font-bold text-green-400">
+                      <span className="text-xl font-bold text-green-400">
                         {player.balance.toLocaleString('ru-RU')} ₽
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Донат-монеты</span>
+                      <span className="text-xl font-bold text-yellow-400">
+                        {player.donateCoins}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -426,6 +751,54 @@ const Index = () => {
               </CardContent>
             </Card>
 
+            {player.career === 'politician' && (
+              <Card className="bg-gradient-to-br from-purple-950/50 to-indigo-950/50 border-purple-500/30">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Icon name="Landmark" size={24} className="text-purple-400" />
+                    Законодательство
+                  </CardTitle>
+                  <CardDescription>
+                    Принимайте законы для вашей страны
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button
+                    onClick={() => passLaw('Закон о снижении налогов на 5%')}
+                    variant="outline"
+                    className="w-full justify-start"
+                  >
+                    <Icon name="Percent" size={16} className="mr-2" />
+                    Снизить налоги
+                  </Button>
+                  <Button
+                    onClick={() => passLaw('Закон об увеличении минимальной зарплаты')}
+                    variant="outline"
+                    className="w-full justify-start"
+                  >
+                    <Icon name="Wallet" size={16} className="mr-2" />
+                    Повысить зарплаты
+                  </Button>
+                  <Button
+                    onClick={() => passLaw('Закон о бесплатном образовании')}
+                    variant="outline"
+                    className="w-full justify-start"
+                  >
+                    <Icon name="GraduationCap" size={16} className="mr-2" />
+                    Бесплатное образование
+                  </Button>
+                  <Button
+                    onClick={() => passLaw('Закон об ужесточении наказаний за преступления')}
+                    variant="outline"
+                    className="w-full justify-start"
+                  >
+                    <Icon name="Gavel" size={16} className="mr-2" />
+                    Ужесточить наказания
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
             <Card className="bg-card/50 backdrop-blur border-primary/30">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -446,6 +819,120 @@ const Index = () => {
           </div>
 
           <div className="space-y-6">
+            <Card className="bg-gradient-to-br from-yellow-950/50 to-amber-950/50 border-yellow-500/30">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Icon name="Coins" size={24} className="text-yellow-400" />
+                  Донат-магазин
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    onClick={() => buyDonateCoins(100, 50000)}
+                    variant="outline"
+                    size="sm"
+                  >
+                    100 монет
+                    <span className="text-xs text-muted-foreground ml-1">50K ₽</span>
+                  </Button>
+                  <Button
+                    onClick={() => buyDonateCoins(500, 200000)}
+                    variant="outline"
+                    size="sm"
+                  >
+                    500 монет
+                    <span className="text-xs text-muted-foreground ml-1">200K ₽</span>
+                  </Button>
+                  <Button
+                    onClick={() => buyDonateCoins(1000, 350000)}
+                    variant="outline"
+                    size="sm"
+                  >
+                    1000 монет
+                    <span className="text-xs text-muted-foreground ml-1">350K ₽</span>
+                  </Button>
+                  <Button
+                    onClick={() => buyDonateCoins(5000, 1500000)}
+                    variant="outline"
+                    size="sm"
+                  >
+                    5000 монет
+                    <span className="text-xs text-muted-foreground ml-1">1.5M ₽</span>
+                  </Button>
+                </div>
+                {!player.countryId && (
+                  <div className="pt-3 border-t border-border">
+                    <Button
+                      onClick={() => setShowCountryCreation(true)}
+                      variant="default"
+                      className="w-full"
+                    >
+                      <Icon name="Flag" size={16} className="mr-2" />
+                      Создать страну (1000 монет)
+                    </Button>
+                  </div>
+                )}
+                {player.countryId && (
+                  <div className="pt-3 border-t border-border">
+                    <p className="text-sm text-center text-green-400">
+                      <Icon name="Check" size={16} className="inline mr-1" />
+                      Вы владелец страны
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {showCountryCreation && (
+              <Card className="bg-gradient-to-br from-blue-950/50 to-purple-950/50 border-blue-500/30 animate-scale-in">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Icon name="Globe" size={24} className="text-blue-400" />
+                    Создание страны
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="space-y-2">
+                    <label className="text-sm text-muted-foreground">Название страны</label>
+                    <input
+                      type="text"
+                      id="country-name"
+                      placeholder="Российская Федерация"
+                      className="w-full p-2 rounded-lg bg-slate-800/50 border border-border focus:border-primary outline-none text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm text-muted-foreground">Флаг (эмодзи)</label>
+                    <input
+                      type="text"
+                      id="country-flag"
+                      placeholder="🇷🇺"
+                      maxLength={2}
+                      className="w-full p-2 rounded-lg bg-slate-800/50 border border-border focus:border-primary outline-none text-sm"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => {
+                        const name = (document.getElementById('country-name') as HTMLInputElement).value;
+                        const flag = (document.getElementById('country-flag') as HTMLInputElement).value;
+                        if (name && flag) createCountry(name, flag);
+                      }}
+                      className="flex-1"
+                    >
+                      Создать
+                    </Button>
+                    <Button
+                      onClick={() => setShowCountryCreation(false)}
+                      variant="outline"
+                    >
+                      Отмена
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
             <Card className="bg-card/50 backdrop-blur animate-fade-in">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
