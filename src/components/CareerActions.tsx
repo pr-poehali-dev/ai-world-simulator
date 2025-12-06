@@ -125,18 +125,6 @@ const careerActionsMap: Record<string, CareerAction[]> = {
     { label: 'Анализ рынка', action: 'Анализ проведён', icon: 'LineChart', variant: 'outline' },
     { label: 'Торговая сессия', action: 'Сессия завершена', icon: 'Activity', variant: 'outline' },
   ],
-  criminal: [
-    { label: 'Ограбить', action: 'Ограбление успешно', icon: 'DollarSign' },
-    { label: 'Создать банду', action: 'Банда создана', icon: 'Users', variant: 'secondary' },
-    { label: 'Захватить район', action: 'Территория захвачена', icon: 'Flag', variant: 'outline' },
-    { label: 'Тёмные дела', action: 'Дело провёрнуто', icon: 'Gem', variant: 'outline' },
-  ],
-  smuggler: [
-    { label: 'Перевезти товар', action: 'Товар доставлен', icon: 'Truck' },
-    { label: 'Открыть канал', action: 'Канал открыт', icon: 'Route', variant: 'secondary' },
-    { label: 'Пересечь границу', action: 'Граница пройдена', icon: 'Plane', variant: 'outline' },
-    { label: 'Продать груз', action: 'Сделка заключена', icon: 'Package', variant: 'outline' },
-  ],
 };
 
 const CareerActions = ({ career, difficulty, onAction }: CareerActionsProps) => {

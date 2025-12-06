@@ -6,8 +6,10 @@ import { Progress } from '@/components/ui/progress';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import CareerActions from '@/components/CareerActions';
+import Phone from '@/components/Phone';
+import Government from '@/components/Government';
 
-type Career = 'business' | 'police' | 'politician' | 'criminal' | 'smuggler' | 'doctor' | 'teacher' | 'programmer' | 'lawyer' | 'journalist' | 'chef' | 'architect' | 'scientist' | 'artist' | 'musician' | 'athlete' | 'driver' | 'pilot' | 'farmer' | 'trader' | null;
+type Career = 'business' | 'police' | 'politician' | 'doctor' | 'teacher' | 'programmer' | 'lawyer' | 'journalist' | 'chef' | 'architect' | 'scientist' | 'artist' | 'musician' | 'athlete' | 'driver' | 'pilot' | 'farmer' | 'trader' | null;
 
 interface Player {
   name: string;
@@ -37,6 +39,36 @@ interface Country {
   population: number;
   budget: number;
   laws: string[];
+}
+
+interface Law {
+  id: string;
+  title: string;
+  description: string;
+  author: string;
+  votes: { for: number; against: number };
+  status: 'draft' | 'voting' | 'approved' | 'rejected';
+  category: string;
+}
+
+interface Friend {
+  name: string;
+  email: string;
+  career: string;
+}
+
+interface Message {
+  from: string;
+  to: string;
+  text: string;
+  time: string;
+}
+
+interface NewsItem {
+  category: string;
+  title: string;
+  text: string;
+  time: string;
 }
 
 const careers = [
@@ -184,22 +216,6 @@ const careers = [
     color: 'text-emerald-400',
     earning: 6800,
   },
-  {
-    id: 'criminal' as Career,
-    name: 'Преступник',
-    icon: 'Skull',
-    description: 'Рискуйте всем, грабьте банки, стройте криминальную империю',
-    color: 'text-red-400',
-    earning: 7000,
-  },
-  {
-    id: 'smuggler' as Career,
-    name: 'Контрабандист',
-    icon: 'Package',
-    description: 'Торгуйте запрещённым товаром, обходите закон, рискуйте свободой',
-    color: 'text-orange-400',
-    earning: 6000,
-  },
 ];
 
 const aiEvents = [
@@ -244,6 +260,27 @@ const Index = () => {
   const [countries, setCountries] = useState<Country[]>([]);
   const [showCountryCreation, setShowCountryCreation] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
+  
+  const [showPhone, setShowPhone] = useState(false);
+  const [showGovernment, setShowGovernment] = useState(false);
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [news, setNews] = useState<NewsItem[]>([
+    {
+      category: 'Политика',
+      title: 'Госдума приняла новый законопроект',
+      text: 'Сегодня депутаты проголосовали за изменения в налоговом кодексе',
+      time: '2 часа назад',
+    },
+    {
+      category: 'Экономика',
+      title: 'Рост фондового рынка',
+      text: 'Индекс ММВБ вырос на 3.5% за последнюю неделю',
+      time: '5 часов назад',
+    },
+  ]);
+  const [laws, setLaws] = useState<Law[]>([]);
+  const [president, setPresident] = useState<string>('admin@liferp.com');
 
   const selectCareer = (career: Career) => {
     setPlayer({ ...player, career });
@@ -423,6 +460,102 @@ const Index = () => {
     });
   };
 
+  const handleAddFriend = (email: string) => {
+    if (friends.some(f => f.email === email)) {
+      toast({
+        title: 'Ошибка',
+        description: 'Этот игрок уже в друзьях',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const newFriend: Friend = {
+      name: `Игрок ${Math.floor(Math.random() * 1000)}`,
+      email,
+      career: careers[Math.floor(Math.random() * careers.length)].name,
+    };
+
+    setFriends(prev => [...prev, newFriend]);
+    toast({
+      title: 'Друг добавлен!',
+      description: `${newFriend.name} теперь в вашем списке друзей`,
+    });
+  };
+
+  const handleSendMessage = (friendId: string, text: string) => {
+    const newMessage: Message = {
+      from: player.email,
+      to: friendId,
+      text,
+      time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    setMessages(prev => [...prev, newMessage]);
+  };
+
+  const handleProposeLaw = (title: string, description: string, category: string) => {
+    const newLaw: Law = {
+      id: Date.now().toString(),
+      title,
+      description,
+      author: player.name,
+      votes: { for: 0, against: 0 },
+      status: 'voting',
+      category,
+    };
+
+    setLaws(prev => [...prev, newLaw]);
+    
+    setNews(prev => [{
+      category: 'Госдума',
+      title: `Новый законопроект: ${title}`,
+      text: `Депутат ${player.name} внёс законопроект на рассмотрение`,
+      time: 'Только что',
+    }, ...prev]);
+  };
+
+  const handleVoteLaw = (lawId: string, vote: boolean) => {
+    setLaws(prev => prev.map(law => {
+      if (law.id === lawId) {
+        const newVotes = {
+          for: law.votes.for + (vote ? 1 : 0),
+          against: law.votes.against + (vote ? 0 : 1),
+        };
+        
+        const totalVotes = newVotes.for + newVotes.against;
+        let newStatus = law.status;
+        
+        if (totalVotes >= 3) {
+          newStatus = newVotes.for > newVotes.against ? 'approved' : 'rejected';
+          
+          setNews(prev => [{
+            category: 'Госдума',
+            title: `Законопроект ${newStatus === 'approved' ? 'принят' : 'отклонён'}`,
+            text: law.title,
+            time: 'Только что',
+          }, ...prev]);
+        }
+        
+        return { ...law, votes: newVotes, status: newStatus };
+      }
+      return law;
+    }));
+
+    toast({
+      title: 'Голос учтён',
+      description: vote ? 'Вы проголосовали ЗА' : 'Вы проголосовали ПРОТИВ',
+    });
+  };
+
+  const handleDeleteLaw = (lawId: string) => {
+    setLaws(prev => prev.filter(law => law.id !== lawId));
+    toast({
+      title: 'Законопроект удалён',
+      description: 'Законопроект снят с рассмотрения',
+    });
+  };
+
   if (!isRegistered) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-slate-900 p-6 flex items-center justify-center">
@@ -551,7 +684,7 @@ const Index = () => {
 
           <div className="mb-8 text-center animate-slide-up">
             <h2 className="text-3xl font-bold mb-6">Выберите свой путь</h2>
-            <p className="text-muted-foreground">20 уникальных профессий из реальной жизни</p>
+            <p className="text-muted-foreground">18 легальных профессий из реальной жизни</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-scale-in">
@@ -605,6 +738,20 @@ const Index = () => {
             </p>
           </div>
           <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowPhone(true)}
+            >
+              <Icon name="Smartphone" size={20} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowGovernment(true)}
+            >
+              <Icon name="Landmark" size={20} />
+            </Button>
             {player.isAdmin && (
               <Button
                 variant="secondary"
@@ -1002,6 +1149,30 @@ const Index = () => {
           </div>
         </div>
       </div>
+
+      {showPhone && (
+        <Phone
+          player={player}
+          friends={friends}
+          messages={messages}
+          news={news}
+          onClose={() => setShowPhone(false)}
+          onSendMessage={handleSendMessage}
+          onAddFriend={handleAddFriend}
+        />
+      )}
+
+      {showGovernment && (
+        <Government
+          player={player}
+          laws={laws}
+          president={president}
+          onClose={() => setShowGovernment(false)}
+          onProposeLaw={handleProposeLaw}
+          onVoteLaw={handleVoteLaw}
+          onDeleteLaw={handleDeleteLaw}
+        />
+      )}
     </div>
   );
 };
